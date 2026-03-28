@@ -167,7 +167,7 @@ getSingleProject = async (req,res)=>{
     })
 
     if(!project){
-        res.status(404).json({
+        return res.status(404).json({
             status : 404,
             message : "No such project exist"
         })
@@ -187,9 +187,17 @@ getSingleProject = async (req,res)=>{
 updateProject = async (req,res) => {
     try{
         const projectID = req.params.projectID
+
         const project = await Project.findOne({
             _id : projectID
         })
+
+        if(!project){
+            return res.status(404).json({
+                status : 404,
+                message : "No such project exist"
+            })
+        }
         
         if(req.body.name){
             project.name = req.body.name
@@ -215,13 +223,21 @@ updateProject = async (req,res) => {
     }
 }
 
+
 deleteProject = async (req,res)=>{
     try{
         const projectID = req.params.projectID
 
-        await Project.deleteOne({
+        const project = await Project.deleteOne({
             _id : projectID
         })
+
+        if(!project){
+            return res.status(404).json({
+                status : 404,
+                message : "No such project exist"
+            })
+        }
 
         res.status(200).json({
             status : 200,
@@ -237,9 +253,46 @@ deleteProject = async (req,res)=>{
     }
 }
 
+removeUser = async (req,res) => {
+    const projectID = req.params.projectID
+    const memberID = req.params.memberID
+
+    const project = await Project.findOne({
+        _id : projectID
+    })
+
+    if(!project){
+        return res.status(404).json({
+            status : 404,
+            message : "No such project exist"
+        })
+    }
+
+    if (project.createdById.toString() === memberID) {
+        return res.status(400).json({ message: "Cannot remove project creator" });
+    }
+
+    const updatedProject = await Project.findByIdAndUpdate(
+        projectID,
+        {
+            $pull: {
+                members: { userId: memberID }
+            }
+        },
+        { new: true }
+    ).select("-inviteToken -createdAT -updatedAt");
+
+    return res.status(200).json({
+        status : 200,
+        message : "Succesfully removed the member"
+
+    })
+} 
+
 module.exports = {
   createProject,
   addUserToAProject,
   getProjectsOfUser,
-  getSingleProject
+  getSingleProject,
+  removeUser
 };
