@@ -49,6 +49,6 @@ app.get("/",accessOnly(["Normal","Admin"]),(req,res)=>{
     // res.send("Hello Nigga")
     res.status(202).json({
         status : 202,
-        message : ""
+        message : "Heloo Americaya"
     })
 })

@@ -122,6 +122,71 @@ addUserToAProject = async (req, res) => {
     }
 };
 
+getProjectsOfUser = async (req,res)=>{
+    const user_projects = await Project.find({
+        // $or : [
+        //     {createdById : req.user._id},
+        //     {"members.userId" : req.user._id}
+        // ]
+        createdById : req.user._id
+    }).select("name description createdBy createdAt")
+
+    const user_member_projects = await Project.find({
+        "members.userId" : req.user._id,
+        createdById: { $ne: req.user._id }   
+    }).select("name description createdById members")
+
+    const memberProjects = user_member_projects.map(project => {
+        const member = project.members.find(
+            m => m.userId.toString() === req.user._id.toString()
+        );
+
+        return {
+            _id: project._id,
+            name: project.name,
+            description: project.description,
+            createdBy : project.createdById,
+            role: "member",
+            joinedAt: member?.joinedAt
+        };
+    });
+
+    res.status(200).json({
+        status : 200,
+        message : "The projects in which the current user is involed is :",
+        admin_Project : user_projects,
+        member_Project : memberProjects
+    })
+}
+
+getSingleProject = async (req,res)=>{
+    const projectID = req.params.projectID;
+
+    const project = await Project.findOne({
+        _id : projectID
+    })
+
+    if(!project){
+        res.status(404).json({
+            status : 404,
+            message : "No such project exist"
+        })
+    }
+
+    return res.status(200).json({
+        status : 200,
+        message : "This is the project",
+        project
+    })
+}
+
+// removeUser = async (req,res){
+//     const user = 
+// }
+
 module.exports = {
-  createProject,addUserToAProject
+  createProject,
+  addUserToAProject,
+  getProjectsOfUser,
+  getSingleProject
 };
