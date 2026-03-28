@@ -115,7 +115,7 @@ getUser = async (req,res)=>{                            // // http://localhost/l
     if(!isMatch){       // if password matches or not
         return res.status(401).json({
             status : 401,
-            message : "Invalid email or password"
+            message : "Invalid email or password",
         })
     }
 

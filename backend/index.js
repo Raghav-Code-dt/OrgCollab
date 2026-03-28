@@ -22,7 +22,6 @@ const connectDB = async ()=>{
 
 const PORT = process.env.PORT || 8000
 
-
 async function startServer(){
     await connectDB();
 
@@ -34,16 +33,17 @@ async function startServer(){
 startServer();
 
 //Authentication && Authorization
-const signUpRouter = require('./routers/SignUp')
-const LoginRouter = require('./routers/Login')
+const signUpRouter = require('./routers/auth/SignUp')
+const LoginRouter = require('./routers/auth/Login')
 const authRateLimiter = require('./middlewares/login-rate-limiter')
 const {checkLogin , accessOnly} = require('./middlewares/checkLogin')
+const projectController = require('./routers/Project')
 
 app.use(checkLogin);
 
 app.use('/signup',signUpRouter)
 app.use('/login',authRateLimiter,LoginRouter)
-
+app.use('/project',accessOnly(["Normal","Admin"]),projectController)
 
 app.get("/",accessOnly(["Normal","Admin"]),(req,res)=>{
     // res.send("Hello Nigga")

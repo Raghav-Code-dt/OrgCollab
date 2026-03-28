@@ -7,7 +7,8 @@ exports.getUserfromToken = async (token)=>{
     try{
         const payload = jwt.verify(token,SECRET_KEY)
         // const curUser = await User.findOne({email : payload.email})
-        return payload;
+        if(payload) return payload
+        else return null
     }catch(err){
         return null;
     }

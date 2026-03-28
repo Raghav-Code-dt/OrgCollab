@@ -1,4 +1,5 @@
 const {getUserfromToken} = require('../services/checkauth')
+const {User} = require('../models/user')
 
 exports.checkLogin = async (req,res,next)=>{
 
@@ -14,8 +15,13 @@ exports.checkLogin = async (req,res,next)=>{
     }
 
     const jwtPayload = await getUserfromToken(token);
-    console.log(jwtPayload)
-    req.user = jwtPayload;
+
+    if(!jwtPayload) return next()
+    
+    const payload = await User.findOne({email : jwtPayload.email}).select("-password -passwordCreaterAt")
+
+    req.user = payload;
+
     return next();
 }
 
