@@ -184,6 +184,59 @@ getSingleProject = async (req,res)=>{
 //     const user = 
 // }
 
+updateProject = async (req,res) => {
+    try{
+        const projectID = req.params.projectID
+        const project = await Project.findOne({
+            _id : projectID
+        })
+        
+        if(req.body.name){
+            project.name = req.body.name
+        }
+
+        if(req.body.description){
+            project.description = req.body.description
+        }
+        
+        await project.save();
+
+        return res.status(200).json({
+            status : 200,
+            message : "Project updated succesfully"
+        })
+
+    }catch(err){
+        return res.status(500).json({
+            status : 500,
+            message : "Some error occured",
+            error : err.message
+        })
+    }
+}
+
+deleteProject = async (req,res)=>{
+    try{
+        const projectID = req.params.projectID
+
+        await Project.deleteOne({
+            _id : projectID
+        })
+
+        res.status(200).json({
+            status : 200,
+            message : "Deleted the project"
+        })
+
+    }catch(err){
+        return res.status(500).json({
+            status : 500,
+            message : "Some error occured",
+            error : err.message
+        })
+    }
+}
+
 module.exports = {
   createProject,
   addUserToAProject,
