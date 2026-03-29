@@ -7,21 +7,14 @@ const crypto = require('crypto')
 const bcyrpt = require('bcryptjs')
 
 function validatePassword(password){
-    if(password.length < 8){            // contain at leat 8 char
+    if(password.length < 8 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[^a-zA-Z0-9]/.test(password)){            // contain at leat 8 char
         return false;
     }
-    if(!/[a-z]/.test(password)){        // contain at least one lowercase letter
-        return false;
-    }
-    if(!/[A-Z]/.test(password)){        // contain at least one upper case letter
-        return false;
-    }
-    if(!/[0-9]/.test(password)){        // contain atleast one number
-        return false;
-    }
-    if(!/[^a-zA-Z0-9]/.test(password)){     // contain atleat 1 special symbol
-        return false;
-    }
+    // contain at least one lowercase letter
+    // contain at least one upper case letter  
+    // contain atleast one number
+    // contain atleat 1 special symbol
+
 
     // if(!/[^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$]/.test(password)){
     //     return false;

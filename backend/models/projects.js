@@ -33,6 +33,7 @@ const ProjectSchema = mongoose.Schema({
         }
     }],
     inviteToken : String
+    // inviteTokenExpiry : So no one can exploit hte invite link , a request every 30 min will hit from frontend to update the token
 },{timestamps : true})
 
 ProjectSchema.index({ createdById: 1, name: 1 }, { unique: true });

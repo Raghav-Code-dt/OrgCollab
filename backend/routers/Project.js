@@ -4,17 +4,24 @@ const {createProject,
      addUserToAProject,
     getProjectsOfUser,
     getSingleProject,
-    removeUser} = require('../controllers/Project')
+    removeUser,
+    updateUserRole,
+    getMembers
+} = require('../controllers/Project')
 
-const authMiddleware = require('../middlewares/checkLogin')
+const projectUpdateMiddleware = require('../middlewares/projectUpdateMiddleware')
 
 router
 .post('/createProject',createProject)
 .get('/',getProjectsOfUser)
-.get('/:projectID',getSingleProject)
-.patch('/:projectID',authMiddleware.accessOnly(["Admin"]),updateProject)
-.delete('/:projectID',authMiddleware.accessOnly(["Admin"]),deleteProject)
-.post('/addUser/:token',addUserToAProject)
-.patch('/:projectID/removeUser/:memeberID',authMiddleware.accessOnly(["Admin"]),removeUser)
+
+.post('/:projectID/addUser/:token',addUserToAProject)
+
+.get('/:projectID',projectUpdateMiddleware.defineRole,projectUpdateMiddleware.accessOnly(["admin","member"]),getSingleProject)
+.patch('/:projectID',projectUpdateMiddleware.defineRole,projectUpdateMiddleware.accessOnly(["admin"]),updateProject)
+.delete('/:projectID',projectUpdateMiddleware.defineRole,projectUpdateMiddleware.accessOnly(["admin"]),deleteProject)
+.delete('/:projectID/removeUser/:memberID',projectUpdateMiddleware.defineRole,projectUpdateMiddleware.accessOnly(["admin"]),removeUser)
+.get('/:projectID/members',projectUpdateMiddleware.defineRole,projectUpdateMiddleware.accessOnly(["admin","member"]),getMembers)
+.patch('/:projectID/updateUserRole/:memberID',projectUpdateMiddleware.defineRole,projectUpdateMiddleware.accessOnly(["admin"]),updateUserRole)
 
 module.exports = router

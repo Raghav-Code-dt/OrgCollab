@@ -10,7 +10,7 @@ createProject = async (req, res) => {
     try {
         const { name, description } = req.body;
 
-        if (!req.user || !role.includes(req.user.role)) {
+        if (!req.user) {
             return res.status(401).json({
                 status: 401,
                 message: "Unauthorized Access",
@@ -66,7 +66,8 @@ createProject = async (req, res) => {
 };
 
 addUserToAProject = async (req, res) => {
-    // http:/.localhost:8000/projects/addUser/:token
+    // http:/.localhost:8000/projects/:projectID/addUser/:token
+    const projectID = req.params.projectID
     const token = req.params?.token;
     if(!token){
         return res.status(404).json({
@@ -75,9 +76,11 @@ addUserToAProject = async (req, res) => {
         })
     }
 
-    const project = await Project.findOne({inviteToken : token})
+    const project = await Project.findById(projectID)
 
-    if(!project){
+    const tokenMatch = token === project?.inviteToken
+
+    if(!tokenMatch){
         return res.status(404).json({
             status : 404,
             message : "Unauthorized Access"
@@ -115,10 +118,10 @@ addUserToAProject = async (req, res) => {
             });
         }
 
-    return res.status(500).json({
-        message: "Something went wrong",
-        err: err.message,
-    });
+        return res.status(500).json({
+            message: "Something went wrong",
+            err: err.message,
+        });
     }
 };
 
@@ -254,45 +257,132 @@ deleteProject = async (req,res)=>{
 }
 
 removeUser = async (req,res) => {
-    const projectID = req.params.projectID
-    const memberID = req.params.memberID
+    try{
+        const projectID = req.params.projectID
+        const memberID = req.params.memberID
 
-    const project = await Project.findOne({
-        _id : projectID
-    })
+        const project = await Project.findOne({ _id : projectID })
+        
+        const member = project.members.find(
+            m => m.userId.toString() === memberID
+        )
 
-    if(!project){
-        return res.status(404).json({
-            status : 404,
-            message : "No such project exist"
+        if(!member){
+            // console.log(memberID)
+            return res.status(404).json({message : "No such user exist"})
+        }
+
+        if (member.role == "admin") {
+            return res.status(400).json({ message: "Cannot remove proj ect admin" });
+        }
+
+        const updatedProject = await Project.findByIdAndUpdate(
+            projectID,
+            {
+                $pull: {
+                    members: { userId: memberID }
+                }
+            },
+            { new: true }
+        ).select("-inviteToken -createdAT -updatedAt");
+
+        return res.status(200).json({
+            status : 200,
+            message : "Succesfully removed the member"
+
+        })
+    }catch(err){
+        return res.status(500).json({
+            status : 500,
+            message : "Some error occured",
+            error : err.message
         })
     }
-
-    if (project.createdById.toString() === memberID) {
-        return res.status(400).json({ message: "Cannot remove project creator" });
-    }
-
-    const updatedProject = await Project.findByIdAndUpdate(
-        projectID,
-        {
-            $pull: {
-                members: { userId: memberID }
-            }
-        },
-        { new: true }
-    ).select("-inviteToken -createdAT -updatedAt");
-
-    return res.status(200).json({
-        status : 200,
-        message : "Succesfully removed the member"
-
-    })
 } 
+
+updateUserRole = async (req,res)=>{
+    try{
+        const projectID = req.params.projectID
+        const memberID = req.params.memberID
+        const { role } = req.body;
+
+        const project = await Project.findOne({
+            _id : projectID
+        })
+
+        const member = project.members.find(
+            m => m.userId.toString() == memberID
+        )
+
+        if (!member) {
+            console.log(memberID);
+            return res.status(404).json({ message: "Member not found" });
+        }
+
+        if (member.role === role) {                                     // if the role are same
+            return res.status(200).json({
+                message: "Role is already the same"
+            });
+        }
+
+        const allowedRoles = ["member", "admin"];
+
+        if (!allowedRoles.includes(role)) {
+            return res.status(400).json({ message: "Invalid role" });
+        }
+        
+        const updatedProject = await Project.findOneAndUpdate(
+            {
+                _id : projectID,
+                "members.userId": memberID
+            },
+            {
+                $set: {
+                    "members.$.role": role
+                }
+            },
+            { new: true }
+        ).select("-inviteToken -createdAT -updatedAt")
+
+        return res.status(200).json({
+            status : 200,
+            message : "Succesfully updated the role of the member"
+        })
+    }catch(err){
+        return res.status(500).json({
+            status : 500,
+            message : "Some error occured",
+            error : err.message
+        })
+    }
+}
+
+getMembers = async (req,res) => {
+    try{
+        const projectID = req.params.projectID
+
+        const memberData = await Project.findOne({_id : projectID}).select("members")
+
+        return res.status(200).json({
+            status : 200,
+            message : "Here are all the users in the project",
+            memberData
+        })
+    }catch(err){
+        return res.status(500).json({
+            status : 500,
+            message : "Some error occured",
+            error : err.message
+        })
+    }
+}
 
 module.exports = {
   createProject,
   addUserToAProject,
   getProjectsOfUser,
   getSingleProject,
-  removeUser
+  removeUser,
+  updateUserRole,
+  getMembers
 };
